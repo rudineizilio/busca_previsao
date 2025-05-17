@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/tvTitulo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="Encontre a previsão diária do local desejado!"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvEstado"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Estado:"
+        app:layout_constraintStart_toStartOf="@+id/tvTitulo"
+        app:layout_constraintTop_toBottomOf="@+id/tvTitulo" />
+
+    <Spinner
+        android:id="@+id/spEstado"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="@+id/tvEstado"
+        app:layout_constraintTop_toBottomOf="@+id/tvEstado"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"/>
+
+    <TextView
+        android:id="@+id/tvCidade"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Cidade:"
+        app:layout_constraintStart_toStartOf="@+id/spEstado"
+        app:layout_constraintTop_toBottomOf="@+id/spEstado" />
+
+    <Spinner
+        android:id="@+id/spCidade"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="@+id/tvCidade"
+        app:layout_constraintTop_toBottomOf="@+id/tvCidade"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"/>
+
+    <Button
+        android:id="@+id/btBuscar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Buscar"
+        app:layout_constraintStart_toStartOf="@+id/spCidade"
+        app:layout_constraintTop_toBottomOf="@+id/spCidade" />
+
+    <TextView
+        android:id="@+id/tvPrevisao"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Previsão do dia:"
+        app:layout_constraintStart_toStartOf="@id/btBuscar"
+        app:layout_constraintTop_toBottomOf="@id/btBuscar" />
+
+    <TextView
+        android:id="@+id/tvDadoPrevisao"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Dados"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintStart_toStartOf="@id/tvPrevisao"
+        app:layout_constraintTop_toBottomOf="@id/tvPrevisao" />
+
+    <TextView
+        android:id="@+id/tvPoluicao"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Poluição do dia:"
+        app:layout_constraintStart_toStartOf="@id/tvDadoPrevisao"
+        app:layout_constraintTop_toBottomOf="@id/tvDadoPrevisao" />
+
+    <TextView
+        android:id="@+id/tvDadoPoluicao"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Dados"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintStart_toStartOf="@id/tvPoluicao"
+        app:layout_constraintTop_toBottomOf="@id/tvPoluicao" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
