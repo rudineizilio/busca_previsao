@@ -55,13 +55,35 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginEnd="16dp"/>
 
+    <TextView
+        android:id="@+id/tvTipoClienteHttp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Cliente HTTP"
+        app:layout_constraintStart_toStartOf="@+id/spCidade"
+        app:layout_constraintTop_toBottomOf="@+id/spCidade" />
+
+    <Spinner
+        android:id="@+id/spTipoClienteHttp"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="@+id/tvTipoClienteHttp"
+        app:layout_constraintTop_toBottomOf="@+id/tvTipoClienteHttp"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="16dp"/>
+        />
+
+
     <Button
         android:id="@+id/btBuscar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:text="Buscar"
-        app:layout_constraintStart_toStartOf="@+id/spCidade"
-        app:layout_constraintTop_toBottomOf="@+id/spCidade" />
+        app:layout_constraintStart_toStartOf="@+id/spTipoClienteHttp"
+        app:layout_constraintTop_toBottomOf="@+id/spTipoClienteHttp" />
 
     <TextView
         android:id="@+id/tvPrevisao"
@@ -81,24 +103,5 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintStart_toStartOf="@id/tvPrevisao"
         app:layout_constraintTop_toBottomOf="@id/tvPrevisao" />
-
-    <TextView
-        android:id="@+id/tvPoluicao"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Poluição do dia:"
-        app:layout_constraintStart_toStartOf="@id/tvDadoPrevisao"
-        app:layout_constraintTop_toBottomOf="@id/tvDadoPrevisao" />
-
-    <TextView
-        android:id="@+id/tvDadoPoluicao"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Dados"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        app:layout_constraintStart_toStartOf="@id/tvPoluicao"
-        app:layout_constraintTop_toBottomOf="@id/tvPoluicao" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

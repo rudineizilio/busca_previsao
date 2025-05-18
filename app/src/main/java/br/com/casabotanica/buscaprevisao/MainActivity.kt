@@ -3,25 +3,21 @@ package br.com.casabotanica.buscaprevisao
 import android.content.Context
 import android.os.Bundle
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.Spinner
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import br.com.casabotanica.buscaprevisao.Network.RetrofitInstance
 import br.com.casabotanica.buscaprevisao.Services.CidadeService
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.launch
-
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tvDadoPrevisao: TextView
     private lateinit var btBuscar: Button
     private lateinit var spCidade: Spinner
     private lateinit var spEstado: Spinner
+    private lateinit var spTipoClienteHttp: Spinner
 
     private lateinit var listaDeEstadosCompletos: List<Estado>
 
@@ -29,10 +25,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        tvDadoPrevisao = findViewById<TextView>(R.id.tvDadoPrevisao)
-        btBuscar = findViewById<Button>(R.id.btBuscar)
-        spEstado = findViewById<Spinner>(R.id.spEstado)
-        spCidade = findViewById<Spinner>(R.id.spCidade)
+        tvDadoPrevisao = findViewById(R.id.tvDadoPrevisao)
+        btBuscar = findViewById(R.id.btBuscar)
+        spEstado = findViewById(R.id.spEstado)
+        spCidade = findViewById(R.id.spCidade)
+        spTipoClienteHttp = findViewById(R.id.spTipoClienteHttp)
+
+        // Configura spinner de bibliotecas HTTP
+        val tiposHttp = listOf("Retrofit", "Volley", "OKHttp")
+        val adapterTipoHttp = ArrayAdapter(this, android.R.layout.simple_spinner_item, tiposHttp)
+        adapterTipoHttp.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spTipoClienteHttp.adapter = adapterTipoHttp
 
         listaDeEstadosCompletos = carregarEstados(this)
         val siglasDosEstados = listaDeEstadosCompletos.map { it.sigla }
@@ -46,21 +49,33 @@ class MainActivity : AppCompatActivity() {
                 val siglaEstadoSelecionado = parent?.getItemAtPosition(position).toString()
                 atualizarSpinnerCidades(siglaEstadoSelecionado)
             }
+
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 spCidade.adapter = null
             }
         }
 
-
         btBuscar.setOnClickListener {
+            val cidadeSelecionada = spCidade.selectedItem?.toString()
+            val tipoClienteHttp = spTipoClienteHttp.selectedItem?.toString()
 
+            if (cidadeSelecionada.isNullOrBlank()) {
+                Toast.makeText(this, "Selecione uma cidade.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            when (tipoClienteHttp) {
+                "Retrofit" -> getWithRetrofit(cidadeSelecionada)
+                "Volley" -> getWithVolley(cidadeSelecionada)
+                "OKHttp" -> getWithOkHttp(cidadeSelecionada)
+                else -> Toast.makeText(this, "Selecione um tipo de cliente HTTP", Toast.LENGTH_SHORT).show()
+            }
         }
-    } // Fim do onCreate
+    }
 
     private fun atualizarSpinnerCidades(siglaEstado: String) {
         lifecycleScope.launch {
             try {
-
                 val cidades = CidadeService.buscarCidadesPorEstado(siglaEstado)
                 if (cidades.isNotEmpty()) {
                     val adapterCidades = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_item, cidades)
@@ -76,14 +91,61 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
     fun carregarEstados(context: Context): List<Estado> {
         val json = context.assets.open("estados.json").bufferedReader().use { it.readText() }
         val gson = Gson()
         val tipoLista = object : TypeToken<List<Estado>>() {}.type
         return gson.fromJson(json, tipoLista)
     }
-}
-// cadastro gratuito : https://home.openweathermap.org/users/sign_up
-    //api keys: https://home.openweathermap.org/api_keys
 
+    private fun getWithRetrofit(cidade: String) {
+        val apiKey = "6fd50f778bb945cd747bfb7b5ceff9b0" //Api Key
+
+        lifecycleScope.launch {
+            try {
+                val response = RetrofitInstance.api.getWeatherByCity(cidade, apiKey, "metric", "pt_br")
+
+                val temp = response.main.temp
+                val desc = response.weather.firstOrNull()?.description ?: "Sem descrição"
+                val cidadeNome = response.name
+
+                val lat = response.coord.lat
+                val lon = response.coord.lon
+
+                val poluicaoResponse = RetrofitInstance.api.getAirPollution(lat, lon, apiKey)
+                val aqi = poluicaoResponse.list.firstOrNull()?.main?.aqi ?: 0
+
+                val textoPoluicao = when (aqi) {
+                    1 -> "Qualidade do ar: Boa"
+                    2 -> "Qualidade do ar: Moderada"
+                    3 -> "Qualidade do ar: Ruim"
+                    4 -> "Qualidade do ar: Muito Ruim"
+                    5 -> "Qualidade do ar: Pior"
+                    else -> "Qualidade do ar: Desconhecida"
+                }
+
+                val texto = """
+                Cidade: $cidadeNome
+                Temperatura: ${temp}°C
+                Condição: ${desc.replaceFirstChar { it.uppercase() }}
+                $textoPoluicao
+            """.trimIndent()
+
+                tvDadoPrevisao.text = texto
+
+            } catch (e: Exception) {
+                tvDadoPrevisao.text = "Erro ao buscar previsão: ${e.message}"
+                e.printStackTrace()
+            }
+        }
+    }
+
+
+    private fun getWithVolley(cidade: String) {
+        Toast.makeText(this, "Volley ainda não implementado", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun getWithOkHttp(cidade: String) {
+        Toast.makeText(this, "OKHttp ainda não implementado", Toast.LENGTH_SHORT).show()
+    }
+}
