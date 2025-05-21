@@ -4,9 +4,7 @@ import br.com.casabotanica.buscaprevisao.Network.OkHttpInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import org.json.JSONArray
-import java.io.IOException
 
 /*Quando usar OkHttp?
 
@@ -17,8 +15,6 @@ Quando quer um cliente leve, eficiente e com bons recursos de cache e autentica√
 */
 
 object CidadeService {
-
-    private val client = OkHttpClient()
 
     suspend fun buscarCidadesPorEstado(uf: String): List<String> {
         val url = "https://servicodados.ibge.gov.br/api/v1/localidades/estados/$uf/municipios"
