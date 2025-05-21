@@ -2,15 +2,20 @@ package br.com.casabotanica.buscaprevisao
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import br.com.casabotanica.buscaprevisao.Network.OkHttpInstance
 import br.com.casabotanica.buscaprevisao.Network.RetrofitInstance
 import br.com.casabotanica.buscaprevisao.Services.CidadeService
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tvDadoPrevisao: TextView
@@ -20,6 +25,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var spTipoClienteHttp: Spinner
 
     private lateinit var listaDeEstadosCompletos: List<Estado>
+
+    val apiKey = "6fd50f778bb945cd747bfb7b5ceff9b0" //Api Key
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -99,7 +106,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getWithRetrofit(cidade: String) {
-        val apiKey = "6fd50f778bb945cd747bfb7b5ceff9b0" //Api Key
 
         lifecycleScope.launch {
             try {
@@ -146,6 +152,57 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getWithOkHttp(cidade: String) {
-        Toast.makeText(this, "OKHttp ainda não implementado", Toast.LENGTH_SHORT).show()
-    }
-}
+        lifecycleScope.launch {
+            lifecycleScope.launch {
+                try {
+                    val weatherJson = withContext(Dispatchers.IO) {
+                        val url = "https://api.openweathermap.org/data/2.5/weather?q=$cidade&appid=$apiKey&units=metric&lang=pt_br"
+                        OkHttpInstance.makeRequest(url)
+                    }
+
+                    val weatherObj = JSONObject(weatherJson)
+                    val temp = weatherObj.getJSONObject("main").getDouble("temp")
+                    val desc = weatherObj.getJSONArray("weather").getJSONObject(0).getString("description")
+                    val cidadeNome = weatherObj.getString("name")
+
+                    val coord = weatherObj.getJSONObject("coord")
+                    val lat = coord.getDouble("lat")
+                    val lon = coord.getDouble("lon")
+
+                    val pollutionJson = withContext(Dispatchers.IO) {
+                        val url = "https://api.openweathermap.org/data/2.5/air_pollution?lat=$lat&lon=$lon&appid=$apiKey"
+                        OkHttpInstance.makeRequest(url)
+                    }
+
+                    val pollutionObj = JSONObject(pollutionJson)
+                    val aqi = pollutionObj.getJSONArray("list").getJSONObject(0).getJSONObject("main").getInt("aqi")
+
+                    val textoPoluicao = when (aqi) {
+                        1 -> "Qualidade do ar: Boa"
+                        2 -> "Qualidade do ar: Moderada"
+                        3 -> "Qualidade do ar: Ruim"
+                        4 -> "Qualidade do ar: Muito Ruim"
+                        5 -> "Qualidade do ar: Pior"
+                        else -> "Qualidade do ar: Desconhecida"
+                    }
+
+                    val texto = """
+                    Cidade: $cidadeNome
+                    Temperatura: ${temp}°C
+                    Condição: ${desc.replaceFirstChar { it.uppercase() }}
+                    $textoPoluicao
+                """.trimIndent()
+
+                    tvDadoPrevisao.text = texto
+
+                } catch (e: Exception) {
+                    tvDadoPrevisao.text = "Erro ao buscar previsão: ${e.message}"
+                    e.printStackTrace()
+                }
+            }
+        }
+    }//Fim da fun getWithOkHttp
+} //Fim da classe
+
+
+
