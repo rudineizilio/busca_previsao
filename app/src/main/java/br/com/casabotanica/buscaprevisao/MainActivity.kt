@@ -1,5 +1,6 @@
 package br.com.casabotanica.buscaprevisao
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.View
@@ -8,7 +9,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import br.com.casabotanica.buscaprevisao.Network.OkHttpInstance
 import br.com.casabotanica.buscaprevisao.Network.RetrofitInstance
+import br.com.casabotanica.buscaprevisao.Network.VolleyInstance
 import br.com.casabotanica.buscaprevisao.Services.CidadeService
+import com.android.volley.Request
+import com.android.volley.toolbox.JsonObjectRequest
+import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var spCidade: Spinner
     private lateinit var spEstado: Spinner
     private lateinit var spTipoClienteHttp: Spinner
+    private lateinit var progressBar: ProgressBar
 
     private lateinit var listaDeEstadosCompletos: List<Estado>
 
@@ -36,6 +42,7 @@ class MainActivity : AppCompatActivity() {
         spEstado = findViewById(R.id.spEstado)
         spCidade = findViewById(R.id.spCidade)
         spTipoClienteHttp = findViewById(R.id.spTipoClienteHttp)
+        progressBar = findViewById(R.id.progressBar)
 
         // Configura spinner de bibliotecas HTTP
         val tiposHttp = listOf("Retrofit", "Volley", "OKHttp")
@@ -145,9 +152,66 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+    @SuppressLint("SetTextI18n")
     private fun getWithVolley(cidade: String) {
-        Toast.makeText(this, "Volley ainda não implementado", Toast.LENGTH_SHORT).show()
+        val urlClima = "https://api.openweathermap.org/data/2.5/weather?q=$cidade&appid=$apiKey&units=metric&lang=pt_br"
+        progressBar.visibility = View.VISIBLE
+        VolleyInstance.makeRequest(this, urlClima,
+            onSuccess = { response ->
+                progressBar.visibility = View.GONE
+                try {
+                    val weatherObj = JSONObject(response)
+                    val temp = weatherObj.getJSONObject("main").getDouble("temp")
+                    val desc = weatherObj.getJSONArray("weather").getJSONObject(0).getString("description")
+                    val cidadeNome = weatherObj.getString("name")
+
+                    val coord = weatherObj.getJSONObject("coord")
+                    val lat = coord.getDouble("lat")
+                    val lon = coord.getDouble("lon")
+
+                    val urlPoluicao = "https://api.openweathermap.org/data/2.5/air_pollution?lat=$lat&lon=$lon&appid=$apiKey"
+
+                    VolleyInstance.makeRequest(this, urlPoluicao,
+                        onSuccess = { poluicaoResponse ->
+                            try {
+                                val poluicaoObj = JSONObject(poluicaoResponse)
+                                val aqi = poluicaoObj.getJSONArray("list").getJSONObject(0).getJSONObject("main").getInt("aqi")
+
+                                val textoPoluicao = when (aqi) {
+                                    1 -> "Qualidade do ar: Boa"
+                                    2 -> "Qualidade do ar: Moderada"
+                                    3 -> "Qualidade do ar: Ruim"
+                                    4 -> "Qualidade do ar: Muito Ruim"
+                                    5 -> "Qualidade do ar: Pior"
+                                    else -> "Qualidade do ar: Desconhecida"
+                                }
+
+                                val texto = """
+                                Cidade: $cidadeNome
+                                Temperatura: ${temp}°C
+                                Condição: ${desc.replaceFirstChar { it.uppercase() }}
+                                $textoPoluicao
+                            """.trimIndent()
+
+                                tvDadoPrevisao.text = texto
+
+                            } catch (e: Exception) {
+                                tvDadoPrevisao.text = getString(R.string.erro_processar_ar) + " ${e.message}"
+                            }
+                        },
+                        onError = { error ->
+                            tvDadoPrevisao.text = getString(R.string.erro_req_poluicao) + " ${error.message}"
+                        }
+                    )
+
+                } catch (e: Exception) {
+                    tvDadoPrevisao.text = getString(R.string.erro_processar_clima) + " ${e.message}"
+                }
+            },
+            onError = { error ->
+                tvDadoPrevisao.text = getString(R.string.erro_req_clima) + " ${error.message}"
+            }
+        )
     }
 
     private fun getWithOkHttp(cidade: String) {

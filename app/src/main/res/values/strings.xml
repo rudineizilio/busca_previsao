@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">BuscaPrevisao</string>
+    <string name="erro_req_clima">Erro na requisição de clima:</string>
+    <string name="erro_processar_clima">Erro ao processar clima:</string>
+    <string name="erro_req_poluicao">Erro na requisição de poluição:</string>
+    <string name="erro_processar_ar">Erro ao processar qualidade do ar:</string>
+    <string name="encontre_a_previs_o_di_ria_do_local_desejado">Encontre a previsão diária do local desejado!</string>
+    <string name="estado">Estado:</string>
+    <string name="cidade">Cidade:</string>
+    <string name="cliente_http">Cliente HTTP</string>
+    <string name="buscar">Buscar</string>
+    <string name="previs_o_do_dia">Previsão do dia:</string>
+    <string name="dados">Dados</string>
+
 </resources>
