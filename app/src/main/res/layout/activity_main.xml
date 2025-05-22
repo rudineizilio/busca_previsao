@@ -122,8 +122,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
         android:text="Performance:"
-        app:layout_constraintTop_toBottomOf="@+id/tvDadoPrevisao"
-        tools:layout_editor_absoluteX="16dp" />
+        app:layout_constraintStart_toStartOf="@+id/tvDadoPrevisao"
+        app:layout_constraintTop_toBottomOf="@+id/tvDadoPrevisao" />
 
     <TextView
         android:id="@+id/tvDadoTotal"
