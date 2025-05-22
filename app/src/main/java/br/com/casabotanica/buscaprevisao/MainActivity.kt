@@ -11,15 +11,14 @@ import br.com.casabotanica.buscaprevisao.Network.OkHttpInstance
 import br.com.casabotanica.buscaprevisao.Network.RetrofitInstance
 import br.com.casabotanica.buscaprevisao.Network.VolleyInstance
 import br.com.casabotanica.buscaprevisao.Services.CidadeService
-import com.android.volley.Request
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class MainActivity : AppCompatActivity() {
     private lateinit var tvDadoPrevisao: TextView
@@ -28,7 +27,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var spEstado: Spinner
     private lateinit var spTipoClienteHttp: Spinner
     private lateinit var progressBar: ProgressBar
-
+    private lateinit var tvDadoTotal: TextView
     private lateinit var listaDeEstadosCompletos: List<Estado>
 
     val apiKey = "6fd50f778bb945cd747bfb7b5ceff9b0" //Api Key
@@ -43,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         spCidade = findViewById(R.id.spCidade)
         spTipoClienteHttp = findViewById(R.id.spTipoClienteHttp)
         progressBar = findViewById(R.id.progressBar)
+        tvDadoTotal = findViewById(R.id.tvDadoTotal)
+
 
         // Configura spinner de bibliotecas HTTP
         val tiposHttp = listOf("Retrofit", "Volley", "OKHttp")
@@ -83,8 +84,49 @@ class MainActivity : AppCompatActivity() {
                 "OKHttp" -> getWithOkHttp(cidadeSelecionada)
                 else -> Toast.makeText(this, "Selecione um tipo de cliente HTTP", Toast.LENGTH_SHORT).show()
             }
+            if (tipoClienteHttp != null) {
+                calcularTempo(tipoClienteHttp, cidadeSelecionada)
+            }
         }
+
+
     }
+    private fun calcularTempo(tipoClienteHttp: String, cidadeSelecionada: String?) {
+        val tempos = mutableListOf<Long>()
+        when (tipoClienteHttp) {
+
+            "Retrofit" -> repeat(10) {
+                if (cidadeSelecionada != null) {
+                    val tempoInicio = System.currentTimeMillis()
+                    getWithRetrofit(cidadeSelecionada)
+                    val tempoFim = System.currentTimeMillis()
+                    tempos.add(tempoFim - tempoInicio)
+                }
+            }
+            "Volley" -> repeat(10) {
+                if (cidadeSelecionada != null) {
+                    val tempoInicio = System.currentTimeMillis()
+                    getWithVolley(cidadeSelecionada)
+                    val tempoFim = System.currentTimeMillis()
+                    tempos.add(tempoFim - tempoInicio)
+                }
+            }
+            "OKHttp" -> repeat(10) {
+                if (cidadeSelecionada != null) {
+                    val tempoInicio = System.currentTimeMillis()
+                    getWithOkHttp(cidadeSelecionada)
+                    val tempoFim = System.currentTimeMillis()
+                    tempos.add(tempoFim - tempoInicio)
+                }
+            }
+            else -> Toast.makeText(this, "Selecione um tipo de cliente HTTP", Toast.LENGTH_SHORT).show()
+        }
+        val media = tempos.average()
+        val desvio = sqrt(tempos.map { (it - media).pow(2) }.average())
+        tvDadoTotal.text = "Média de tempo da requisição: ${media}\n Desvio: ${desvio}"
+    } //Fim do calculaTempo
+
+
 
     private fun atualizarSpinnerCidades(siglaEstado: String) {
         lifecycleScope.launch {
@@ -142,7 +184,6 @@ class MainActivity : AppCompatActivity() {
                 Condição: ${desc.replaceFirstChar { it.uppercase() }}
                 $textoPoluicao
             """.trimIndent()
-
                 tvDadoPrevisao.text = texto
 
             } catch (e: Exception) {
@@ -154,8 +195,10 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetTextI18n")
     private fun getWithVolley(cidade: String) {
+
         val urlClima = "https://api.openweathermap.org/data/2.5/weather?q=$cidade&appid=$apiKey&units=metric&lang=pt_br"
         progressBar.visibility = View.VISIBLE
+
         VolleyInstance.makeRequest(this, urlClima,
             onSuccess = { response ->
                 progressBar.visibility = View.GONE
@@ -164,7 +207,6 @@ class MainActivity : AppCompatActivity() {
                     val temp = weatherObj.getJSONObject("main").getDouble("temp")
                     val desc = weatherObj.getJSONArray("weather").getJSONObject(0).getString("description")
                     val cidadeNome = weatherObj.getString("name")
-
                     val coord = weatherObj.getJSONObject("coord")
                     val lat = coord.getDouble("lat")
                     val lon = coord.getDouble("lon")
@@ -218,6 +260,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             lifecycleScope.launch {
                 try {
+
                     val weatherJson = withContext(Dispatchers.IO) {
                         val url = "https://api.openweathermap.org/data/2.5/weather?q=$cidade&appid=$apiKey&units=metric&lang=pt_br"
                         OkHttpInstance.makeRequest(url)
@@ -225,21 +268,20 @@ class MainActivity : AppCompatActivity() {
 
                     val weatherObj = JSONObject(weatherJson)
                     val temp = weatherObj.getJSONObject("main").getDouble("temp")
-                    val desc = weatherObj.getJSONArray("weather").getJSONObject(0).getString("description")
+                    val desc = weatherObj.getJSONArray("weather")
+                        .getJSONObject(0).getString("description")
                     val cidadeNome = weatherObj.getString("name")
 
                     val coord = weatherObj.getJSONObject("coord")
                     val lat = coord.getDouble("lat")
                     val lon = coord.getDouble("lon")
-
                     val pollutionJson = withContext(Dispatchers.IO) {
                         val url = "https://api.openweathermap.org/data/2.5/air_pollution?lat=$lat&lon=$lon&appid=$apiKey"
                         OkHttpInstance.makeRequest(url)
                     }
-
                     val pollutionObj = JSONObject(pollutionJson)
-                    val aqi = pollutionObj.getJSONArray("list").getJSONObject(0).getJSONObject("main").getInt("aqi")
-
+                    val aqi = pollutionObj.getJSONArray("list").getJSONObject(0)
+                        .getJSONObject("main").getInt("aqi")
                     val textoPoluicao = when (aqi) {
                         1 -> "Qualidade do ar: Boa"
                         2 -> "Qualidade do ar: Moderada"
@@ -248,7 +290,6 @@ class MainActivity : AppCompatActivity() {
                         5 -> "Qualidade do ar: Pior"
                         else -> "Qualidade do ar: Desconhecida"
                     }
-
                     val texto = """
                     Cidade: $cidadeNome
                     Temperatura: ${temp}°C

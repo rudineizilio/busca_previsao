@@ -14,5 +14,4 @@ object OkHttpInstance {
             return response.body?.string() ?: throw IOException("Resposta vazia")
         }
     }
-
 }
