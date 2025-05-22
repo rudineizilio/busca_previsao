@@ -154,7 +154,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getWithRetrofit(cidade: String) {
-
+        progressBar.visibility = View.VISIBLE
         lifecycleScope.launch {
             try {
                 val response = RetrofitInstance.api.getWeatherByCity(cidade, apiKey, "metric", "pt_br")
@@ -184,6 +184,7 @@ class MainActivity : AppCompatActivity() {
                 Condição: ${desc.replaceFirstChar { it.uppercase() }}
                 $textoPoluicao
             """.trimIndent()
+                progressBar.visibility = View.GONE
                 tvDadoPrevisao.text = texto
 
             } catch (e: Exception) {
@@ -257,6 +258,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getWithOkHttp(cidade: String) {
+        progressBar.visibility = View.VISIBLE
         lifecycleScope.launch {
             lifecycleScope.launch {
                 try {
@@ -296,7 +298,7 @@ class MainActivity : AppCompatActivity() {
                     Condição: ${desc.replaceFirstChar { it.uppercase() }}
                     $textoPoluicao
                 """.trimIndent()
-
+                    progressBar.visibility = View.GONE
                     tvDadoPrevisao.text = texto
 
                 } catch (e: Exception) {
